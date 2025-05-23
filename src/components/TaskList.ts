@@ -1,3 +1,4 @@
+
 class TaskList extends HTMLElement {
   private tasks: TaskItem[] = [];
 
@@ -142,112 +143,29 @@ class TaskList extends HTMLElement {
 
     this.shadowRoot.innerHTML = `
       <style>
-        :host {
-          display: block;
-          font-family: 'Segoe UI', sans-serif;
-        }
-
-        .task-zone {
-          display: grid;
-          gap: 1.5rem;
-          background-color: #111;
-          border: 2px dashed #0ff4;
-          padding: 1rem;
-          border-radius: 1rem;
-        }
-
-        .section {
-          background: #1a1a1a;
-          border-left: 4px solid #00f2ff;
-          padding: 1rem;
-          border-radius: 0.5rem;
-        }
-
-        .section h3 {
-          color: #0ff;
-          border-bottom: 1px solid #0ff4;
-          padding-bottom: 0.5rem;
-        }
-
-        ul.task-list {
-          list-style: none;
-          padding: 0;
-          margin: 0.5rem 0 0 0;
-        }
-
-        li.task {
-          background: #222;
-          color: #fff;
-          margin-bottom: 10px;
-          padding: 0.8rem;
-          border-radius: 8px;
-          box-shadow: 0 0 6px #0ff2;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        li.task.done {
-          opacity: 0.6;
-          text-decoration: line-through;
-        }
-
-        .task-info {
-          flex: 1;
-        }
-
-        .title {
-          font-weight: 600;
-          margin-bottom: 4px;
-        }
-
-        .desc {
-          font-size: 0.85rem;
-          color: #ccc;
-        }
-
-        .actions {
-          display: flex;
-          gap: 0.5rem;
-        }
-
-        button {
-          background: transparent;
-          border: 1px solid #0ff;
-          color: #0ff;
-          padding: 0.3rem 0.6rem;
-          border-radius: 4px;
-          font-size: 0.75rem;
-          cursor: pointer;
-          transition: all 0.2s ease-in-out;
-        }
-
-        button:hover {
-          background: #0ff;
-          color: #000;
-        }
-
-        .empty {
-          color: #666;
-          font-style: italic;
-          text-align: center;
-        }
-
-        .highlight-drop {
-          outline: 2px dashed #0ff;
-          background-color: #111e;
-        }
+        :host { display: block; font-family: 'Segoe UI', sans-serif; }
+        .task-zone { display: grid; gap: 1.5rem; background: #111; border: 2px dashed #0ff4; padding: 1rem; border-radius: 1rem; }
+        .section { background: #1a1a1a; border-left: 4px solid #00f2ff; padding: 1rem; border-radius: 0.5rem; }
+        .section h3 { color: #0ff; border-bottom: 1px solid #0ff4; padding-bottom: 0.5rem; }
+        ul.task-list { list-style: none; padding: 0; margin: 0.5rem 0 0 0; }
+        li.task { background: #222; color: #fff; margin-bottom: 10px; padding: 0.8rem; border-radius: 8px; box-shadow: 0 0 6px #0ff2; display: flex; justify-content: space-between; align-items: center; }
+        li.task.done { opacity: 0.6; text-decoration: line-through; }
+        .task-info { flex: 1; }
+        .title { font-weight: 600; margin-bottom: 4px; }
+        .desc { font-size: 0.85rem; color: #ccc; }
+        .actions { display: flex; gap: 0.5rem; }
+        button { background: transparent; border: 1px solid #0ff; color: #0ff; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s ease-in-out; }
+        button:hover { background: #0ff; color: #000; }
+        .empty { color: #666; font-style: italic; text-align: center; }
+        .highlight-drop { outline: 2px dashed #0ff; background-color: #111e; }
       </style>
 
       <div class="task-zone">
         <div class="section">
           <h3>Pendientes (${pending.length})</h3>
-          ${
-            pending.length
-              ? `<ul class="task-list">
-                  ${pending
-                    .map(
-                      t => `
+          ${pending.length
+            ? `<ul class="task-list">
+                ${pending.map(t => `
                   <li class="task" data-id="${t.id}">
                     <div class="task-info">
                       <div class="title">${t.title}</div>
@@ -257,22 +175,17 @@ class TaskList extends HTMLElement {
                       <button class="complete-btn">✔</button>
                       <button class="delete-btn">✖</button>
                     </div>
-                  </li>`
-                    )
-                    .join("")}
-                </ul>`
-              : `<p class="empty">No hay tareas pendientes</p>`
+                  </li>`).join("")}
+              </ul>`
+            : `<p class="empty">No hay tareas pendientes</p>`
           }
         </div>
 
         <div class="section">
           <h3>Completadas (${done.length})</h3>
-          ${
-            done.length
-              ? `<ul class="task-list">
-                  ${done
-                    .map(
-                      t => `
+          ${done.length
+            ? `<ul class="task-list">
+                ${done.map(t => `
                   <li class="task done" data-id="${t.id}">
                     <div class="task-info">
                       <div class="title">${t.title}</div>
@@ -282,15 +195,32 @@ class TaskList extends HTMLElement {
                       <button class="complete-btn">↺</button>
                       <button class="delete-btn">✖</button>
                     </div>
-                  </li>`
-                    )
-                    .join("")}
-                </ul>`
-              : `<p class="empty">No hay tareas completadas</p>`
+                  </li>`).join("")}
+              </ul>`
+            : `<p class="empty">No hay tareas completadas</p>`
           }
         </div>
       </div>
     `;
+
+    
+    this.shadowRoot.querySelectorAll(".complete-btn")
+      .forEach(btn => {
+        btn.addEventListener("click", e => {
+          const li = (e.currentTarget as HTMLElement).closest("li.task") as HTMLElement;
+          const id = li.dataset.id!;
+          this.toggleTaskComplete(id);
+        });
+      });
+
+    this.shadowRoot.querySelectorAll(".delete-btn")
+      .forEach(btn => {
+        btn.addEventListener("click", e => {
+          const li = (e.currentTarget as HTMLElement).closest("li.task") as HTMLElement;
+          const id = li.dataset.id!;
+          this.deleteTask(id);
+        });
+      });
   }
 }
 
