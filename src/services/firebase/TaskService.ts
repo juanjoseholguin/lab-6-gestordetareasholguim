@@ -1,5 +1,4 @@
 
-
 import {
   collection,
   addDoc,
@@ -10,11 +9,13 @@ import {
   updateDoc,
   deleteDoc,
   Timestamp,
+  onSnapshot
 } from "firebase/firestore";
 import { db } from "./firebase-config";
 import { TaskType } from "../../types/TypesDB";
 
 
+ 
 export async function addTask(
   task: Omit<TaskType, "id">
 ): Promise<string | null> {
@@ -36,6 +37,7 @@ export async function addTask(
 }
 
 
+ 
 export async function getTasksByUserId(
   userId: string
 ): Promise<TaskType[]> {
@@ -55,6 +57,28 @@ export async function getTasksByUserId(
   }
 }
 
+
+export function subscribeTasksByUser(
+  userId: string,
+  callback: (tasks: TaskType[]) => void
+) {
+  const q = query(
+    collection(db, "tasks"),
+    where("userId", "==", userId)
+  );
+  const unsub = onSnapshot(q, snap => {
+    const tasks = snap.docs.map(d => ({
+      id: d.id,
+      ...(d.data() as Omit<TaskType, "id">)
+    }));
+    callback(tasks);
+  }, err => {
+    console.error("🔥 subscribeTasksByUser error:", err);
+  });
+  return unsub;
+}
+
+
 export async function updateTask(
   id: string,
   updates: Partial<TaskType>
@@ -67,6 +91,7 @@ export async function updateTask(
     return false;
   }
 }
+
 
 export async function deleteTask(id: string): Promise<boolean> {
   try {

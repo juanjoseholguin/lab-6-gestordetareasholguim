@@ -1,16 +1,16 @@
-
-
 import { TaskType } from "../types/TypesDB";
 import {
   getTasksByUserId,
-  addTask,
-  updateTask,
-  deleteTask,
+  subscribeTasksByUser,
+  addTask as svcAddTask,
+  updateTask as svcUpdateTask,
+  deleteTask as svcDeleteTask,
 } from "../services/firebase/TaskService";
 import { logoutUser } from "../services/firebase/auth-service";
 
 class TasksPage extends HTMLElement {
   private tasks: TaskType[] = [];
+  private unsubscribeTasks?: () => void;
 
   constructor() {
     super();
@@ -20,7 +20,146 @@ class TasksPage extends HTMLElement {
   connectedCallback() {
     this.render();
     this.attachEvents();
-    this.fetchTasks();
+    this.startRealtimeSubscription();
+  }
+
+  disconnectedCallback() {
+    this.unsubscribeTasks && this.unsubscribeTasks();
+  }
+
+  private render() {
+    this.shadowRoot!.innerHTML = `
+      <style>
+        /* tus estilos originales */
+        :host {
+          --bg: #0f0f1b;
+          --text: #f0f0f0;
+          --card-bg: #1f1f2e;
+          --accent: #00f5d4;
+          --warning: #ff9f1c;
+          --success: #06d6a0;
+          --danger: #ef476f;
+          font-family: 'Montserrat', sans-serif;
+          display: block;
+        }
+        .container {
+          padding: 2rem;
+          color: var(--text);
+          background: var(--bg);
+          min-height: 100vh;
+        }
+        .top-bar {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1.5rem;
+        }
+        .top-bar h1 {
+          color: var(--accent);
+          margin: 0;
+        }
+        button {
+          background: var(--accent);
+          color: #000;
+          border: none;
+          padding: 0.5rem 1.2rem;
+          border-radius: 30px;
+          cursor: pointer;
+          font-weight: bold;
+          transition: 0.3s;
+        }
+        button:hover {
+          background: #06d6a0;
+        }
+        #logout-btn {
+          background: transparent;
+          border: 1px solid var(--accent);
+          color: var(--accent);
+        }
+        .task-list {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+          gap: 1rem;
+        }
+        .card {
+          background: var(--card-bg);
+          padding: 1rem;
+          border-left: 5px solid var(--accent);
+          border-radius: 10px;
+          box-shadow: 0 0 10px rgba(0,255,200,0.2);
+        }
+        .card.in-progress {
+          border-left-color: var(--warning);
+        }
+        .card.completed {
+          border-left-color: var(--success);
+        }
+        .card.completed h3 {
+          text-decoration: line-through;
+        }
+        .actions {
+          margin-top: 1rem;
+          display: flex;
+          gap: 0.5rem;
+        }
+        .actions button {
+          background: none;
+          border: none;
+          font-size: 1.2rem;
+          cursor: pointer;
+          color: var(--text);
+          transition: transform 0.2s;
+        }
+        .actions button:hover {
+          transform: scale(1.3);
+        }
+        .modal {
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(0,0,0,0.6);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+        .modal-box {
+          background: var(--card-bg);
+          padding: 1rem;
+          border-radius: 12px;
+          width: 90%;
+          max-width: 500px;
+          color: var(--text);
+          position: relative;
+        }
+        .modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .close {
+          background: none;
+          border: none;
+          font-size: 1.5rem;
+          color: var(--danger);
+          cursor: pointer;
+        }
+        .empty {
+          text-align: center;
+          color: #888;
+          margin-top: 3rem;
+        }
+      </style>
+      <div class="container">
+        <div class="top-bar">
+          <h1>Tareas</h1>
+          <div>
+            <button id="add-btn">+ Nueva</button>
+            <button id="logout-btn">Cerrar sesión</button>
+          </div>
+        </div>
+        <div class="task-list"></div>
+      </div>
+    `;
   }
 
   private attachEvents() {
@@ -42,14 +181,17 @@ class TasksPage extends HTMLElement {
       });
   }
 
-  private async fetchTasks() {
+ 
+  private startRealtimeSubscription() {
     const userId = localStorage.getItem("userId");
     if (!userId) return;
-
-    this.tasks = await getTasksByUserId(userId);
-    this.renderTasks();
+    this.unsubscribeTasks = subscribeTasksByUser(userId, tasks => {
+      this.tasks = tasks;
+      this.renderTasks();
+    });
   }
 
+  
   private renderTasks() {
     const list = this.shadowRoot!.querySelector(".task-list") as HTMLElement;
     list.innerHTML =
@@ -89,13 +231,13 @@ class TasksPage extends HTMLElement {
     } as const;
 
     const newStatus = statusCycle[task.status as keyof typeof statusCycle];
-    const success = await updateTask(id, { status: newStatus });
-    if (success) this.fetchTasks();
+    const ok = await svcUpdateTask(id, { status: newStatus });
+    if (!ok) console.error("Error actualizando estado");
   }
 
   private async deleteTask(id: string) {
-    const success = await deleteTask(id);
-    if (success) this.fetchTasks();
+    const ok = await svcDeleteTask(id);
+    if (!ok) console.error("Error borrando tarea");
   }
 
   private async addTask(data: {
@@ -112,8 +254,8 @@ class TasksPage extends HTMLElement {
       status: "todo",
     };
 
-    const taskId = await addTask(newTask);
-    if (taskId) this.fetchTasks();
+    const taskId = await svcAddTask(newTask);
+    if (!taskId) console.error("Error creando tarea");
   }
 
   private showModal() {
@@ -141,160 +283,6 @@ class TasksPage extends HTMLElement {
         this.addTask(custom.detail);
         modal.remove();
       });
-  }
-
-  private render() {
-    this.shadowRoot!.innerHTML = `
-      <style>
-        :host {
-          --bg: #0f0f1b;
-          --text: #f0f0f0;
-          --card-bg: #1f1f2e;
-          --accent: #00f5d4;
-          --warning: #ff9f1c;
-          --success: #06d6a0;
-          --danger: #ef476f;
-          font-family: 'Montserrat', sans-serif;
-          display: block;
-        }
-
-        .container {
-          padding: 2rem;
-          color: var(--text);
-          background: var(--bg);
-          min-height: 100vh;
-        }
-
-        .top-bar {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 1.5rem;
-        }
-
-        .top-bar h1 {
-          color: var(--accent);
-          margin: 0;
-        }
-
-        button {
-          background: var(--accent);
-          color: #000;
-          border: none;
-          padding: 0.5rem 1.2rem;
-          border-radius: 30px;
-          cursor: pointer;
-          font-weight: bold;
-          transition: 0.3s;
-        }
-
-        button:hover {
-          background: #06d6a0;
-        }
-
-        #logout-btn {
-          background: transparent;
-          border: 1px solid var(--accent);
-          color: var(--accent);
-        }
-
-        .task-list {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-          gap: 1rem;
-        }
-
-        .card {
-          background: var(--card-bg);
-          padding: 1rem;
-          border-left: 5px solid var(--accent);
-          border-radius: 10px;
-          box-shadow: 0 0 10px rgba(0,255,200,0.2);
-        }
-
-        .card.in-progress {
-          border-left-color: var(--warning);
-        }
-
-        .card.completed {
-          border-left-color: var(--success);
-        }
-
-        .card.completed h3 {
-          text-decoration: line-through;
-        }
-
-        .actions {
-          margin-top: 1rem;
-          display: flex;
-          gap: 0.5rem;
-        }
-
-        .actions button {
-          background: none;
-          border: none;
-          font-size: 1.2rem;
-          cursor: pointer;
-          color: var(--text);
-          transition: transform 0.2s;
-        }
-
-        .actions button:hover {
-          transform: scale(1.3);
-        }
-
-        .modal {
-          position: fixed;
-          top: 0; left: 0; right: 0; bottom: 0;
-          background: rgba(0,0,0,0.6);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-        }
-
-        .modal-box {
-          background: var(--card-bg);
-          padding: 1rem;
-          border-radius: 12px;
-          width: 90%;
-          max-width: 500px;
-          color: var(--text);
-          position: relative;
-        }
-
-        .modal-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .close {
-          background: none;
-          border: none;
-          font-size: 1.5rem;
-          color: var(--danger);
-          cursor: pointer;
-        }
-
-        .empty {
-          text-align: center;
-          color: #888;
-          margin-top: 3rem;
-        }
-      </style>
-
-      <div class="container">
-        <div class="top-bar">
-          <h1>Tareas</h1>
-          <div>
-            <button id="add-btn">+ Nueva</button>
-            <button id="logout-btn">Cerrar sesión</button>
-          </div>
-        </div>
-        <div class="task-list"></div>
-      </div>
-    `;
   }
 }
 
