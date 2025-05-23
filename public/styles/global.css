@@ -1,0 +1,54 @@
+:root {
+  --neon-blue: #00ffff;
+  --neon-pink: #ff00ff;
+  --bg-dark: #0d0d0d;
+  --card-dark: #1a1a1a;
+  --font-main: 'Segoe UI', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--neon-blue);
+  font-family: var(--font-main);
+  margin: 0;
+  padding: 0;
+}
+
+input, button {
+  border: none;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+input {
+  background: #222;
+  color: var(--neon-blue);
+  border: 1px solid var(--neon-pink);
+}
+
+button {
+  background: var(--neon-blue);
+  color: #000;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+button:hover {
+  background: var(--neon-pink);
+  color: #fff;
+}
+
+.card {
+  background: var(--card-dark);
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 0 20px var(--neon-blue);
+  width: 100%;
+  max-width: 400px;
+}
