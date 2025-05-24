@@ -1,4 +1,3 @@
-
 import { onAuthChange } from "../services/firebase/auth-service";
 
 class MainPage extends HTMLElement {

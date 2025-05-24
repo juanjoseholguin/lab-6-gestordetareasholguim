@@ -1,4 +1,3 @@
-
 class TaskList extends HTMLElement {
   private tasks: TaskItem[] = [];
 

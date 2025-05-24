@@ -1,4 +1,3 @@
-
 import { registerUser } from "../services/firebase/auth-service";
 
 class NeonRegisterBox extends HTMLElement {

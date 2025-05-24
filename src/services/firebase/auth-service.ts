@@ -21,7 +21,7 @@ export async function registerUser(
     localStorage.setItem("username", username);
     return { success: true, user };
   } catch (err: any) {
-    console.error("🔥 registerUser error:", err.code, err.message);
+    console.error(" registerUser error:", err.code, err.message);
     return { success: false, error: err };
   }
 }
@@ -37,7 +37,7 @@ export async function loginUser(
     if (user.displayName) localStorage.setItem("username", user.displayName);
     return { success: true, user };
   } catch (err: any) {
-    console.error("🔥 loginUser error:", err.code, err.message);
+    console.error(" loginUser error:", err.code, err.message);
     return { success: false, error: err };
   }
 }
@@ -48,7 +48,7 @@ export async function logoutUser(): Promise<{ success: boolean; error?: any }> {
     localStorage.clear();
     return { success: true };
   } catch (err: any) {
-    console.error("🔥 logoutUser error:", err.code, err.message);
+    console.error(" logoutUser error:", err.code, err.message);
     return { success: false, error: err };
   }
 }

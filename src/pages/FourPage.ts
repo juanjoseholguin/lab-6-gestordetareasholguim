@@ -1,5 +1,3 @@
-
-
 class NeonFourPage extends HTMLElement {
   private shadow: ShadowRoot;
 

@@ -1,4 +1,3 @@
-
 class NeonTaskCard extends HTMLElement {
   constructor() {
     super();

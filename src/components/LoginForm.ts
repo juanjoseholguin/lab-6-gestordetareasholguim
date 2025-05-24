@@ -1,4 +1,3 @@
-
 import { loginUser } from "../services/firebase/auth-service";
 
 class GlitchyLoginForm extends HTMLElement {

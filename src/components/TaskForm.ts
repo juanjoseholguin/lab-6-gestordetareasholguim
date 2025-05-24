@@ -1,5 +1,3 @@
-
-
 class NeonTaskForm extends HTMLElement {
   private shadow: ShadowRoot;
 
