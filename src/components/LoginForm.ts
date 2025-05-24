@@ -114,8 +114,7 @@ class GlitchyLoginForm extends HTMLElement {
         window.location.href = "/tasks";
         
         
-        // window.history.pushState({}, "", "/tasks");
-        // window.dispatchEvent(new PopStateEvent("popstate"));
+       
       } else {
         const msg = (result.error as any)?.message 
                   || "Credenciales inválidas o error de conexión.";

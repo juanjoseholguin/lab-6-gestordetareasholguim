@@ -23,7 +23,6 @@ class NeonTaskCard extends HTMLElement {
       btn.addEventListener('click', (e) => {
         const target = e.currentTarget as HTMLButtonElement;
         const newStatus = target.dataset.status!;
-        // actualizamos el atributo para que el render refleje el cambio
         this.setAttribute('status', newStatus);
         this.dispatchEvent(new CustomEvent('task-status-changed', {
           bubbles: true,
